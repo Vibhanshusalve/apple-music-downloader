@@ -21,9 +21,9 @@ Original script by Sorrow. Modified by me to include some fixes and improvements
 3. Launch Apple Music and sign in to your account (subscription required).
 4. Port forward 10020 TCP: `adb forward tcp:10020 tcp:10020`.
 5. [Start frida server.](https://frida.re/docs/android/)
-6. Start the frida agent: `frida -U -l agent.js -f com.apple.android.music`.
+6. Start the frida agent: `frida -U -l agent.js -f com.apple.android.music`. #if dosent work just use abd
 
-7. Build the project: `go build -o appleDL .`.
+8. Build the project: `go build -o appleDL .`.
 - Start downloading some albums / playlists: `./appleDL URL`.
 - Start downloading singles: `./appleDL --select URL` (input numbers separated by spaces).
 - For dolby atmos: `./appleDL --atmos URL`.
