@@ -1890,6 +1890,24 @@ func rip(albumId string, token string, storefront string, userToken string) erro
 	return err
 }
 
+func processArtistURL(artistUrl string, token string) ([]string, error) {
+	urlArtistName, err := getUrlArtistName(artistUrl, token)
+	if err != nil {
+		fmt.Println("Failed to get artistname.")
+		return nil, err
+	}
+	//fmt.Println("get artistname:", urlArtistName)
+	config.ArtistFolderFormat = strings.NewReplacer(
+		"{UrlArtistName}", LimitString(urlArtistName),
+	).Replace(config.ArtistFolderFormat)
+	newArgs, err := checkArtist(artistUrl, token)
+	if err != nil {
+		fmt.Println("Failed to get artist.")
+		return nil, err
+	}
+	return newArgs, nil
+}
+
 func main() {
 	err := loadConfig()
 	if err != nil {
@@ -1934,27 +1952,24 @@ func main() {
 		pflag.Usage()
 		return
 	}
-	os.Args = args
-	if strings.Contains(os.Args[0], "/artist/") {
-		urlArtistName, err := getUrlArtistName(os.Args[0], token)
-		if err != nil {
-			fmt.Println("Failed to get artistname.")
-			return
+
+	var urlsToProcess []string
+	for _, arg := range args {
+		if strings.Contains(arg, "/artist/") {
+			artistAlbumUrls, err := processArtistURL(arg, token)
+			if err != nil {
+				fmt.Printf("Failed to process artist URL %s: %v\n", arg, err)
+				continue
+			}
+			urlsToProcess = append(urlsToProcess, artistAlbumUrls...)
+		} else {
+			urlsToProcess = append(urlsToProcess, arg)
 		}
-		//fmt.Println("get artistname:", urlArtistName)
-		config.ArtistFolderFormat = strings.NewReplacer(
-			"{UrlArtistName}", LimitString(urlArtistName),
-		).Replace(config.ArtistFolderFormat)
-		newArgs, err := checkArtist(os.Args[0], token)
-		if err != nil {
-			fmt.Println("Failed to get artist.")
-			return
-		}
-		os.Args = newArgs
 	}
-	albumTotal := len(os.Args)
+
+	albumTotal := len(urlsToProcess)
 	for {
-		for albumNum, url := range os.Args {
+		for albumNum, url := range urlsToProcess {
 			fmt.Printf("Album %d of %d:\n", albumNum+1, albumTotal)
 			var storefront, albumId string
 			if strings.Contains(url, ".txt") {
